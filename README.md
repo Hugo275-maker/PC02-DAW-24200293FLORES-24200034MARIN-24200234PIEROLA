@@ -24,10 +24,15 @@ npm run dev
 src/
 ├─ boot/axios.js             ← 2 instancias: countriesApi y currenciesApi, con header Bearer
 ├─ services/
-│   ├─ countries.js          ← listar, buscarPorCapital, porContinente, porCodigo
+│   ├─ countries.js          ← listar, buscarPorCapital, porContinente, porCodigo + toCountry (normalizador)
+│   ├─ borders.js            ← fronteras alpha-3 -> nombre y alpha-2 (GET /borders/{alpha3})
 │   └─ currencies.js         ← tasa(codigo), convertir(from, to, amount)
+├─ utils/
+│   ├─ format.js             ← flagUrl, formatPopulation, formatArea, joinValues, nombres en español
+│   └─ errors.js             ← mensajeDeError(err): único manejador de errores
 ├─ components/
 │   ├─ CountryCard.vue       ← bandera, nombre, capital, población, continente, chip de moneda
+│   ├─ FlagImage.vue         ← bandera de flagcdn con respaldo si no carga
 │   ├─ CountryFilters.vue    ← buscador por capital + selector de continente
 │   └─ CurrencyDialog.vue    ← modal: nombre/código/símbolo, tasa vs USD, conversor
 ├─ pages/
@@ -64,31 +69,31 @@ ya está en `main`. Cada archivo tiene arriba un comentario con su **responsable
 
 ```js
 {
-  code: 'PE', code3: 'PER', name: 'Perú', officialName: 'República del Perú',
+  code: 'PE', alpha3: 'PER', name: 'Perú', officialName: 'República del Perú',
   capital: 'Lima', population: 34157732, area: 1285216,
   region: 'Americas', continent: 'Sudamérica', subregion: 'South America',
-  languages: ['Aymara', 'Quechua', 'Spanish'], timezones: ['UTC-05:00'],
+  languages: ['Aimara', 'Quechua', 'Español'], timezones: ['UTC-05:00'],
   callingCodes: ['+51'], tlds: ['.pe'], drivingSide: 'Derecha',
   borders: ['BOL', 'BRA', 'CHL', 'COL', 'ECU'],          // ALPHA-3
-  currency: { code: 'PEN', name: 'Peruvian sol', symbol: 'S/' },
+  currency: { code: 'PEN', name: 'Sol peruano', symbol: 'S/' },
   currencies: [ /* todas las monedas */ ]
 }
 ```
 
-Helpers en `src/utils/format.js`: `flagUrl(code, 160)`, `formatPopulation(n)` → `34.2 M`, `formatArea(km2)` → `1 285 216 km²`.
-`porCodigo(code)` ya devuelve el país normalizado (o `null`) y `errorMessage(err)` da un mensaje listo para mostrar.
+Helpers en `src/utils/format.js`: `flagUrl(code, 160)`, `formatPopulation(n)` → `34.2 M`, `formatArea(km2)` → `1 285 216 km²`, `joinValues(arr)`.
+`porCodigo(code)` ya devuelve el país normalizado (o `null`) y `mensajeDeError(err)` (`src/utils/errors.js`) da un mensaje listo para mostrar.
 
 **Ana — Tarjeta y Pantalla 2 (detalle)**
-- [ ] `CountryCard.vue`: bandera `https://flagcdn.com/w160/{alpha2}.png`, nombre, capital, población (ej. `34.0 M`), chip de continente y chip de moneda (`@click.stop` → emite `currency`).
-- [ ] `CountryDetailPage.vue`: `porCodigo(code)`; bandera grande (`w320`), nombre, continente, capital destacada, población, área, idiomas, zona horaria, código telefónico, dominio, lado de conducción.
-- [ ] Países fronterizos como chips → navegan a `/country/:code` (usar `watch(() => props.code)` para recargar).
-- [ ] Chip/tarjeta de moneda en el detalle → abre `CurrencyDialog`.
+- [x] `CountryCard.vue`: bandera `https://flagcdn.com/w160/{alpha2}.png`, nombre, capital, población (ej. `34.0 M`), chip de continente y chip de moneda (`@click.stop` → emite `currency`).
+- [x] `CountryDetailPage.vue`: `porCodigo(code)`; bandera grande (`w320`), nombre, continente, capital destacada, población, área, idiomas, zona horaria, código telefónico, dominio, lado de conducción.
+- [x] Países fronterizos como chips → navegan a `/country/:code` (usar `watch(() => props.code)` para recargar).
+- [x] Chip/tarjeta de moneda en el detalle → abre `CurrencyDialog`.
 
 **Gabriela — Modal de moneda**
-- [ ] `currencies.js`: verificar la forma real de las respuestas de `/rates/{codigo}` y `/convert`.
-- [ ] `CurrencyDialog.vue`: al abrirse, pedir `tasa(code)` y mostrar `1 PEN = 0.27 USD`.
-- [ ] Conversor: `q-input type="number"` + botón **Convertir a USD** → `convertir(code, 'USD', monto)` y mostrar el resultado.
-- [ ] Estados de carga (`:loading` en el botón) y error (`q-banner` / `Notify`); validar monto > 0.
+- [x] `currencies.js`: verificar la forma real de las respuestas de `/rates/{codigo}` y `/convert`.
+- [x] `CurrencyDialog.vue`: al abrirse, pedir `tasa(code)` y mostrar `1 PEN = 0.27 USD`.
+- [x] Conversor: `q-input type="number"` + botón **Convertir a USD** → `convertir(code, 'USD', monto)` y mostrar el resultado.
+- [x] Estados de carga (`:loading` en el botón) y error (`q-banner` / `Notify`); validar monto > 0.
 
 ### Contratos entre componentes (no cambiar sin avisar)
 

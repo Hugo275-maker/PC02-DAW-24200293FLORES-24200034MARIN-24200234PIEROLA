@@ -7,6 +7,7 @@
 // reciban siempre el mismo objeto, ya en español y listo para mostrar.
 // ------------------------------------------------------------------
 import { countriesApi } from 'boot/axios'
+import { countryNameEs, currencyNameEs, languageNameEs } from 'src/utils/format'
 
 export const PAGE_SIZE = 24
 
@@ -40,7 +41,7 @@ const DRIVING_SIDE_ES = { right: 'Derecha', left: 'Izquierda' }
 /**
  * Convierte un país crudo de la API en el objeto que usa la app.
  * @returns {{
- *   code: string, code3: string, name: string, officialName: string,
+ *   code: string, alpha3: string, name: string, officialName: string,
  *   capital: string, population: number, area: number|null,
  *   region: string, continent: string, subregion: string,
  *   languages: string[], timezones: string[], callingCodes: string[],
@@ -50,18 +51,19 @@ const DRIVING_SIDE_ES = { right: 'Derecha', left: 'Izquierda' }
  * }}
  */
 export function toCountry (raw) {
+  const alpha2 = raw.codes?.alpha_2 ?? ''
   const spa = raw.names?.translations?.spa
   const continentEn = raw.continents?.[0] ?? raw.region ?? ''
   const currencies = (raw.currencies ?? []).map(c => ({
     code: c.code,
-    name: c.name,
-    symbol: c.symbol ?? c.code
+    name: currencyNameEs(c.code, c.name), // "PEN" -> "Sol peruano"
+    symbol: (c.symbol ?? c.code).trim()
   }))
 
   return {
-    code: raw.codes?.alpha_2 ?? '',
-    code3: raw.codes?.alpha_3 ?? '',
-    name: spa?.common ?? raw.names?.common ?? '',
+    code: alpha2,
+    alpha3: raw.codes?.alpha_3 ?? '',
+    name: spa?.common ?? countryNameEs(alpha2, raw.names?.common ?? ''),
     officialName: spa?.official ?? raw.names?.official ?? '',
     capital: raw.capitals?.find(c => c.attributes?.primary)?.name ?? raw.capitals?.[0]?.name ?? '—',
     population: raw.population ?? null,
@@ -69,7 +71,7 @@ export function toCountry (raw) {
     region: raw.region ?? '',
     continent: CONTINENTS_ES[continentEn] ?? continentEn,
     subregion: raw.subregion ?? '',
-    languages: (raw.languages ?? []).map(l => l.name),
+    languages: (raw.languages ?? []).map(l => languageNameEs(l.bcp47 || l.iso639_1 || l.iso639_3, l.name)),
     timezones: raw.timezones ?? [],
     callingCodes: (raw.calling_codes ?? []).map(c => `+${c}`),
     tlds: raw.tlds ?? [],
@@ -93,16 +95,6 @@ function toPage (body) {
     total: meta.total ?? objects.length,
     more: Boolean(meta.more)
   }
-}
-
-/** Mensaje de error entendible para el usuario */
-export function errorMessage (err) {
-  const status = err?.response?.status
-  if (status === 401 || status === 403) return 'API key inválida o ausente. Revisa VITE_API_KEY en el archivo .env.'
-  if (status === 404) return 'No se encontró la información solicitada.'
-  if (status === 429) return 'Se alcanzó el límite de solicitudes de la API. Intenta más tarde.'
-  if (!err?.response) return 'No se pudo conectar con la API. Revisa tu conexión a internet.'
-  return err?.response?.data?.errors?.[0]?.message ?? 'Ocurrió un error inesperado.'
 }
 
 // ---------- Endpoints ----------

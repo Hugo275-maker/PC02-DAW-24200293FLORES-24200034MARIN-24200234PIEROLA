@@ -45,19 +45,5 @@ export async function convertir (from, to, amount) {
   return { result: obj.result, rate: obj.rate, asOf: obj.as_of ?? null }
 }
 
-/**
- * Convierte cualquier error en un mensaje que el usuario entienda.
- * La API manda sus errores así: { errors: [ { message, code } ] }
- */
-export function mensajeDeError (error) {
-  const status = error?.response?.status
-  const mensajeApi = error?.response?.data?.errors?.[0]?.message
-
-  if (status === 401 || status === 403) return 'La API key no es válida o no tiene permiso. Revisa tu archivo .env'
-  if (status === 429) return 'Demasiadas consultas seguidas. Espera unos segundos e intenta otra vez'
-  if (mensajeApi) return mensajeApi
-  if (error?.isAxiosError && !error.response) {
-    return 'No se pudo conectar con la API. Revisa tu internet o que localhost esté permitido en tu key'
-  }
-  return error?.message || 'No se pudo completar la consulta'
-}
+// El manejo de errores es común a toda la app (utils/errors.js)
+export { mensajeDeError } from 'src/utils/errors'

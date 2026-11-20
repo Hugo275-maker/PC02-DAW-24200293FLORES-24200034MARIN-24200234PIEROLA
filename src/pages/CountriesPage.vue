@@ -98,9 +98,10 @@ import {
   REGIONS,
   listar,
   buscarPorCapital,
-  porContinente,
-  errorMessage
+  porContinente
 } from 'src/services/countries'
+import { registrarPaises } from 'src/services/borders'
+import { mensajeDeError } from 'src/utils/errors'
 
 defineOptions({ name: 'CountriesPage' })
 
@@ -159,13 +160,14 @@ async function load () {
     const page = await fetchPage(0)
     if (id !== requestId) return
     countries.value = page.items
+    registrarPaises(page.items) // ahorra requests al resolver fronteras en el detalle
     nextOffset = page.count
     total.value = page.total
     more.value = page.more
   } catch (err) {
     if (id !== requestId) return
     countries.value = []
-    error.value = errorMessage(err)
+    error.value = mensajeDeError(err)
   } finally {
     if (id === requestId) loading.value = false
   }
@@ -180,11 +182,12 @@ async function loadMore () {
     if (id !== requestId) return
     const known = new Set(countries.value.map(c => c.code))
     countries.value.push(...page.items.filter(c => !known.has(c.code)))
+    registrarPaises(page.items)
     nextOffset += page.count
     total.value = page.total
     more.value = page.more
   } catch (err) {
-    $q.notify({ type: 'negative', message: errorMessage(err) })
+    $q.notify({ type: 'negative', message: mensajeDeError(err) })
   } finally {
     loadingMore.value = false
   }

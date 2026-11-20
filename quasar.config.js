@@ -19,7 +19,7 @@ export default defineConfig(() => {
     },
 
     devServer: {
-      open: true
+      open: false
     },
 
     framework: {

@@ -55,10 +55,28 @@ ya está en `main`. Cada archivo tiene arriba un comentario con su **responsable
 ### Detalle por persona
 
 **Hugo — Pantalla 1 (listado)**
-- [ ] `countries.js`: verificar la forma real de las respuestas y normalizarlas (un mismo formato de país para todos).
-- [ ] `CountryFilters.vue`: confirmar los valores válidos de continente para `/region/{continente}`.
-- [ ] `CountriesPage.vue`: `onMounted → listar()`; `watch` de búsqueda (`buscarPorCapital`) y continente (`porContinente`).
-- [ ] Estados: `q-skeleton`/`q-spinner` mientras carga, `q-banner` con botón *Reintentar* si falla, mensaje si no hay resultados.
+- [x] `countries.js`: respuestas normalizadas con `toCountry()` (un mismo formato de país para todos, en español).
+- [x] `CountryFilters.vue`: buscador con debounce + selector de continente (`REGIONS`).
+- [x] `CountriesPage.vue`: carga inicial, búsqueda por capital, filtro por continente (y ambos combinados), paginación con *Cargar más*, filtros guardados en la URL.
+- [x] Estados: skeletons mientras carga, `q-banner` con *Reintentar* si falla, estado vacío con *Limpiar filtros*.
+
+### Objeto `country` normalizado (lo que reciben `CountryCard` y `CountryDetailPage`)
+
+```js
+{
+  code: 'PE', code3: 'PER', name: 'Perú', officialName: 'República del Perú',
+  capital: 'Lima', population: 34157732, area: 1285216,
+  region: 'Americas', continent: 'Sudamérica', subregion: 'South America',
+  languages: ['Aymara', 'Quechua', 'Spanish'], timezones: ['UTC-05:00'],
+  callingCodes: ['+51'], tlds: ['.pe'], drivingSide: 'Derecha',
+  borders: ['BOL', 'BRA', 'CHL', 'COL', 'ECU'],          // ALPHA-3
+  currency: { code: 'PEN', name: 'Peruvian sol', symbol: 'S/' },
+  currencies: [ /* todas las monedas */ ]
+}
+```
+
+Helpers en `src/utils/format.js`: `flagUrl(code, 160)`, `formatPopulation(n)` → `34.2 M`, `formatArea(km2)` → `1 285 216 km²`.
+`porCodigo(code)` ya devuelve el país normalizado (o `null`) y `errorMessage(err)` da un mensaje listo para mostrar.
 
 **Ana — Tarjeta y Pantalla 2 (detalle)**
 - [ ] `CountryCard.vue`: bandera `https://flagcdn.com/w160/{alpha2}.png`, nombre, capital, población (ej. `34.0 M`), chip de continente y chip de moneda (`@click.stop` → emite `currency`).

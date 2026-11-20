@@ -1,46 +1,50 @@
-const NBSP = '\u00A0'
+// ------------------------------------------------------------------
+// utils/format.js  —  helpers de presentación compartidos por todo el equipo
+// ------------------------------------------------------------------
 
-/** Minúsculas y sin tildes, para comparar textos. */
-export function normalizeText(value = '') {
-  return String(value)
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim()
-}
+const NBSP = ' '
 
-export function capitalize(text = '') {
+const isNumber = value => typeof value === 'number' && !Number.isNaN(value)
+
+export function capitalize (text = '') {
   return text ? text.charAt(0).toUpperCase() + text.slice(1) : text
 }
 
-/** 1 285 216 (separador de miles con espacio fino). */
-export function formatNumber(value) {
-  if (typeof value !== 'number' || Number.isNaN(value)) return '—'
+/** URL de la bandera en flagcdn. width: 80 | 160 | 320 (miniaturas: 80/160) */
+export function flagUrl (alpha2, width = 160) {
+  if (!alpha2) return ''
+  return `https://flagcdn.com/w${width}/${alpha2.toLowerCase()}.png`
+}
+
+/** 1285216 -> "1 285 216" (separador de miles con espacio) */
+export function formatNumber (value) {
+  if (!isNumber(value)) return '—'
   return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value).replace(/,/g, NBSP)
 }
 
-/** 34 038 000 -> "34.0 M". Debajo del millón muestra el número completo. */
-export function formatPopulation(value) {
-  if (typeof value !== 'number' || Number.isNaN(value)) return '—'
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}${NBSP}M`
+/** 34157732 -> "34.2 M" · debajo del millón muestra el número completo */
+export function formatPopulation (value) {
+  if (!isNumber(value)) return '—'
+  if (value >= 1e9) return `${(value / 1e9).toFixed(1)}${NBSP}B`
+  if (value >= 1e6) return `${(value / 1e6).toFixed(1)}${NBSP}M`
   return formatNumber(value)
 }
 
-/** Tasas de cambio: hasta 4 cifras significativas (0.2703, 162.2, 0.00006173). */
-export function formatRate(value) {
-  if (typeof value !== 'number' || Number.isNaN(value)) return '—'
-  return new Intl.NumberFormat('es-PE', { maximumSignificantDigits: 4 }).format(value)
+/** 1285216 -> "1 285 216 km²" */
+export function formatArea (km2) {
+  return isNumber(km2) ? `${formatNumber(km2)}${NBSP}km²` : '—'
 }
 
-/** Montos convertidos: siempre 2 decimales. */
-export function formatAmount(value) {
-  if (typeof value !== 'number' || Number.isNaN(value)) return '—'
-  return new Intl.NumberFormat('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)
+/** ["UTC-05:00", ...] -> "UTC-05:00, UTC-06:00 y 2 más" */
+export function joinValues (values = [], max = 3) {
+  if (!values.length) return '—'
+  if (values.length <= max) return values.join(', ')
+  return `${values.slice(0, max).join(', ')} y ${values.length - max} más`
 }
 
 // ---------- Nombres en español (Intl.DisplayNames) ----------
 
-function makeDisplayNames(type) {
+function makeDisplayNames (type) {
   try {
     return new Intl.DisplayNames(['es'], { type })
   } catch {
@@ -52,7 +56,7 @@ const regionNames = makeDisplayNames('region')
 const languageNames = makeDisplayNames('language')
 const currencyNames = makeDisplayNames('currency')
 
-function translate(displayNames, code, fallback) {
+function translate (displayNames, code, fallback) {
   if (!code) return fallback
   try {
     const value = displayNames?.of(code)
@@ -62,34 +66,9 @@ function translate(displayNames, code, fallback) {
   }
 }
 
+/** "BR" -> "Brasil" */
 export const countryNameEs = (alpha2, fallback) => translate(regionNames, alpha2, fallback)
+/** "es" -> "Español" */
 export const languageNameEs = (code, fallback) => capitalize(translate(languageNames, code, fallback))
+/** "PEN" -> "Sol peruano" */
 export const currencyNameEs = (code, fallback) => capitalize(translate(currencyNames, code, fallback))
-
-// ---------- Continentes ----------
-
-/** Etiqueta en español del continente que muestra cada tarjeta. */
-export const CONTINENT_LABELS = {
-  Africa: 'África',
-  Antarctica: 'Antártida',
-  Asia: 'Asia',
-  Europe: 'Europa',
-  'North America': 'Norteamérica',
-  Oceania: 'Oceanía',
-  'South America': 'Sudamérica'
-}
-
-/**
- * Opciones del selector. El valor es lo que espera el endpoint
- * GET /countries/v5/region/{continente} (campo `region` de la API).
- */
-export const REGION_OPTIONS = [
-  { label: 'Todos los continentes', value: '' },
-  { label: 'África', value: 'Africa' },
-  { label: 'América', value: 'Americas' },
-  { label: 'Asia', value: 'Asia' },
-  { label: 'Europa', value: 'Europe' },
-  { label: 'Oceanía', value: 'Oceania' }
-]
-
-export const DRIVING_SIDE_LABELS = { left: 'Izquierda', right: 'Derecha' }

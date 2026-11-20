@@ -2,7 +2,7 @@
   CountryCard.vue  —  RESPONSABLE: Ana
   Tarjeta de un país en el listado.
 
-  Props:  country (Object)  -> país normalizado (o el JSON crudo de la API: se normaliza aquí)
+  Props:  country (Object)  -> país normalizado por services/countries.js (toCountry)
   Emits:  'select'   (code)      -> al tocar la tarjeta (ir al detalle)
           'currency' (currency)  -> al tocar el chip de moneda (abrir CurrencyDialog)
 
@@ -52,8 +52,7 @@
 <script setup>
 import { computed } from 'vue'
 import FlagImage from 'components/FlagImage.vue'
-import { normalizeCountry } from '../utils/country.js'
-import { formatPopulation } from '../utils/format.js'
+import { formatPopulation } from 'src/utils/format'
 
 defineOptions({ name: 'CountryCard' })
 
@@ -63,7 +62,7 @@ const props = defineProps({
 
 const emit = defineEmits(['select', 'currency'])
 
-const data = computed(() => normalizeCountry(props.country))
+const data = computed(() => props.country)
 
 function open () {
   emit('select', data.value.code)

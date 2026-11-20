@@ -77,7 +77,7 @@
           <div class="info-tile">
             <span class="info-tile__label">Área</span>
             <span class="info-tile__value">
-              {{ country.area === null ? '—' : `${formatNumber(country.area)} km²` }}
+              {{ formatArea(country.area) }}
             </span>
           </div>
 
@@ -156,11 +156,10 @@ import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import CurrencyDialog from 'components/CurrencyDialog.vue'
 import FlagImage from 'components/FlagImage.vue'
-import { porCodigo } from '../services/countries.js'
-import { resolverFronteras } from '../services/borders.js'
-import { extractObjects, joinValues, normalizeCountry } from '../utils/country.js'
-import { mensajeDeError } from '../utils/errors.js'
-import { formatNumber, formatPopulation } from '../utils/format.js'
+import { porCodigo } from 'src/services/countries'
+import { resolverFronteras } from 'src/services/borders'
+import { mensajeDeError } from 'src/utils/errors'
+import { formatArea, formatPopulation, joinValues } from 'src/utils/format'
 
 defineOptions({ name: 'CountryDetailPage' })
 
@@ -191,14 +190,13 @@ async function load () {
   window.scrollTo(0, 0)
 
   try {
-    const res = await porCodigo(props.code)
+    const data = await porCodigo(props.code) // ya viene normalizado (o null)
     if (myToken !== token) return
-    const raw = extractObjects(res)[0]
-    if (!raw) {
+    if (!data) {
       error.value = 'No encontramos información para este país.'
       return
     }
-    country.value = normalizeCountry(raw)
+    country.value = data
     loading.value = false
     loadBorders(country.value, myToken)
   } catch (err) {
